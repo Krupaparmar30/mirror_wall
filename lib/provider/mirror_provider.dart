@@ -34,6 +34,7 @@ class MirrorProvider extends ChangeNotifier {
       case "Yahoo":
         webUrl = "https://in.search.yahoo.com/search?p=$getSearch";
         break;
+
       case "bing"
           :
         webUrl = "https://www.bing.com/search?q=$getSearch";
@@ -50,28 +51,46 @@ class MirrorProvider extends ChangeNotifier {
 
   Future<void> addHistory(String url, String getSearch) async {
     try {
-      SharedPreferences sharedPreferences=await SharedPreferences.getInstance();
-      bool ck=false;
-      for(int i=0;i<userHistory.length;i++)
-        {
-          if(url==userHistory[i].split("--------------").sublist(0,1).join(" "))
-            {
-              ck=true;
-              break;
-            }
+      SharedPreferences sharedPreferences = await SharedPreferences
+          .getInstance();
+      bool ck = false;
+      for (int i = 0; i < userHistory.length; i++) {
+        if (url ==
+            userHistory[i].split("--------------").sublist(0, 1).join(" ")) {
+          ck = true;
+          break;
         }
-      if(!ck){
+      }
+      if (!ck) {
         userHistory.add("$url---$getSearch");
         notifyListeners();
         sharedPreferences.setStringList("history", userHistory);
       }
-
-
-
     } catch (e) {
       print("error!!!!!!!!!$e");
-
     }
+  }
+  
+  Future<void> deleteHistory(int index)
+  async {
+    SharedPreferences sharedPreferences = await SharedPreferences
+        .getInstance();
+    userHistory.removeAt(index);
+    notifyListeners();
+    sharedPreferences.setStringList("history", userHistory);
+  }
+  Future<void> getHistory()
+  async {
+    SharedPreferences sharedPreferences = await SharedPreferences
+        .getInstance();
+    userHistory = sharedPreferences.getStringList("history") ?? [];
+    print(userHistory);
+    notifyListeners();
+
+  }
+  MirrorProvider()
+  {
+    getHistory();
   }
 
 }

@@ -7,7 +7,7 @@ import 'package:provider/provider.dart';
 
 import 'commpontes/commponets.dart';
 
-InAppWebViewController? _webViewController;
+InAppWebViewController? webViewController;
 TextEditingController searchController = TextEditingController();
 
 class HomePage extends StatelessWidget {
@@ -21,27 +21,35 @@ class HomePage extends StatelessWidget {
 
     return Scaffold(
         appBar: AppBar(
-          title: TextField(
+          title:
+          TextField(
             controller: searchController,
             onSubmitted: (value) {
               print(
                   '-------------------------------------------------------------------->');
               print(value);
 
-              _webViewController?.loadUrl(
+              webViewController?.loadUrl(
                 urlRequest: URLRequest(
                     url: WebUri("https://www.google.com/search?q=$value")),
               );
+            //  refreshWebAll(mirrorProviderTrue);
             },
           ),
+
+
+          
           actions: [
+            IconButton(onPressed: () {
+              refreshWebAll(mirrorProviderTrue);
+            }, icon: Icon(Icons.refresh)),
             PopupMenuButton(
               itemBuilder: (context) => [
                 bottemPopupMenu1("History", 0),
                 bottemPopupMenu1("Search Engine", 1),
               ],
-              onSelected: (value) {
-                if (value == 1) {
+              onSelected: (item) {
+                if (item == 1) {
                   showDialog(
                     context: context,
                     builder: (context) {
@@ -74,33 +82,40 @@ class HomePage extends StatelessWidget {
                                   Navigator.pop(context);
                                 },
                                 child: Text("X Dismiss")),
-                            Expanded(
-                              child: ListView.builder(
-                                itemCount:
-                                    mirrorProviderTrue.userHistory.length,
-                                itemBuilder: (context, index) {
-                                  final data =
-                                      mirrorProviderTrue.userHistory[index];
-                                  final url =
-                                      data.split('---').sublist(0, 1).join(' ');
-                                  final search =
-                                      data.split('---').sublist(1, 2).join(' ');
+                           Consumer<MirrorProvider>(builder: (context, value, child) =>  Expanded(
+                             child: ListView.builder(
+                               itemCount:
+                               mirrorProviderTrue.userHistory.length,
 
-                                  ListTile(
-                                    onTap: () {
-                                      searchController.text=search;
-                                      _webViewController!.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
-                                      Navigator.pop(context);
-                                    },
-                                    title: Text(search),
-                                    subtitle: Text(url),
-                                    trailing: IconButton(
-                                        onPressed: () {},
-                                        icon: Icon(Icons.delete)),
-                                  );
-                                },
-                              ),
-                            )
+                               itemBuilder: (context, index) {
+                                 final data =
+                                 mirrorProviderTrue.userHistory[index];
+                                 final url =
+                                 data.split('---').sublist(0, 1).join(' ');
+                                 final search =
+                                 data.split('---').sublist(1, 2).join(' ');
+                                 print("-----");
+                                 print("-----$url");
+
+                                 ListTile(
+                                   onTap: () {
+                                     searchController.text=search;
+                                     webViewController!.loadUrl(urlRequest: URLRequest(url: WebUri(url)));
+
+                                     Navigator.pop(context);
+                                   },
+                                   title: Text(search),
+                                   subtitle: Text(url),
+                                   trailing: IconButton(
+                                       onPressed: () {
+                                         mirrorProviderFalse.deleteHistory(index);
+                                       },
+                                       icon: Icon(Icons.delete)),
+                                 );
+                               },
+                             ),
+                           ),
+                           )
                           ],
                         ),
                       );
@@ -115,9 +130,9 @@ class HomePage extends StatelessWidget {
           children: [
             (mirrorProviderTrue.isLoading)
                 ? LinearProgressIndicator(
-                    color: Colors.blue.shade600,
-                  )
-                : SizedBox(width: 0, height: 0),
+              color: Colors.blue.shade600,
+            ):
+
             Expanded(
 
               child: InAppWebView(
@@ -125,7 +140,7 @@ class HomePage extends StatelessWidget {
                   url: WebUri(mirrorProviderTrue.webUrl),
                 ),
                 onWebViewCreated: (controller) {
-                  _webViewController = controller;
+                  webViewController = controller;
                 },
                 onLoadStart: (controller, url) {
                   mirrorProviderFalse.updateLoadingStatus(true);
@@ -141,12 +156,15 @@ class HomePage extends StatelessWidget {
             )
           ],
         ),
-        bottomSheet: InAppWebView(
+        bottomSheet:
+
+
+        InAppWebView(
           initialUrlRequest: URLRequest(
             url: WebUri("https://www.google.com/search?q="),
           ),
           onWebViewCreated: (controller) {
-            _webViewController = controller;
+            webViewController = controller;
           },
         ),
         bottomNavigationBar: Padding(
@@ -171,19 +189,19 @@ class HomePage extends StatelessWidget {
                 IconButton(
                   icon: Icon(Icons.arrow_back_ios),
                   onPressed: () {
-                    _webViewController?.goBack();
+                    webViewController?.goBack();
                   },
                 ),
                 IconButton(
                   icon: Icon(Icons.refresh),
                   onPressed: () {
-                    _webViewController?.reload();
+                    webViewController?.reload();
                   },
                 ),
                 IconButton(
                   icon: Icon(Icons.arrow_forward_ios),
                   onPressed: () {
-                    _webViewController?.goForward();
+                    webViewController?.goForward();
                   },
                 ),
               ],
@@ -206,17 +224,3 @@ class HomePage extends StatelessWidget {
 // ],
 // )),
 
-PopupMenuItem bottemPopupMenu1(String title, int value) {
-  return PopupMenuItem(
-      value: value,
-      child: Row(
-        mainAxisSize: MainAxisSize.min,
-        children: [
-          Icon(Icons.bookmark_add_outlined),
-          SizedBox(
-            width: 5,
-          ),
-          Text(title)
-        ],
-      ));
-}
